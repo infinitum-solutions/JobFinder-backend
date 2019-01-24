@@ -1,4 +1,4 @@
-FROM openjdk:8-jdk-alpine
+FROM openjdk:10-jdk-alpine
 ADD target/JobFinder-backend.jar JobFinder-backend.jar
 VOLUME /var/opt/JobFinder-backend
 EXPOSE 8433
