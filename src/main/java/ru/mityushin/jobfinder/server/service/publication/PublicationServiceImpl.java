@@ -75,7 +75,7 @@ public class PublicationServiceImpl implements PublicationService {
                 || publication.getDeleted()) {
             throw new DataNotFoundException("This publication has been deleted or has not been created yet.");
         }
-        if (publication.getAuthorUuid() != JobFinderUtils.getPrincipalIdentifier()) {
+        if (!publication.getAuthorUuid().equals(JobFinderUtils.getPrincipalIdentifier())) {
             throw new PermissionDeniedException("You are not the author of this publication.");
         }
     }

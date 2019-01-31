@@ -125,7 +125,7 @@ public class OrganizationServiceImpl implements OrganizationService {
     }
 
     private static void checkPermission(Organization organization) {
-        if (organization.getCreatorUuid() != JobFinderUtils.getPrincipalIdentifier()) {
+        if (!organization.getCreatorUuid().equals(JobFinderUtils.getPrincipalIdentifier())) {
             throw new PermissionDeniedException("You are not the creator of this organization.");
         }
     }
