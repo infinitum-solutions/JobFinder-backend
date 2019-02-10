@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration scan="true">
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+    <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
+    <property name="LOG_LOCATION" value="/var/log/jobfinder-backend"/>
+    <property name="ARCHIVE_LOCATION" value="/var/log/jobfinder-backend"/>
+    <appender name="JobFinder-backend" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_LOCATION}/jobfinder-backend.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>
+                ${ARCHIVE_LOCATION}/archive/%d{yyyy-MM-dd}/jobfinder-backend-%d{yyyy-MM-dd_HH-mm,aux}.log.gz
+            </fileNamePattern>
+            <maxHistory>90</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+        </encoder>
+    </appender>
+    <logger name="ru.mityushin.jobfinder.server" level="DEBUG"/>
+    <root level="INFO">
+        <appender-ref ref="JobFinder-backend"/>
+        <appender-ref ref="CONSOLE"/>
+    </root>
+</configuration>
