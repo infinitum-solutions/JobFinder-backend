@@ -12,6 +12,7 @@ import ru.mityushin.jobfinder.server.repo.PublicationRepository;
 import ru.mityushin.jobfinder.server.repo.RoleRepository;
 import ru.mityushin.jobfinder.server.service.role.RoleService;
 import ru.mityushin.jobfinder.server.dto.PersonDTO;
+import ru.mityushin.jobfinder.server.util.JobFinderUtils;
 import ru.mityushin.jobfinder.server.util.exception.PermissionDeniedException;
 import ru.mityushin.jobfinder.server.util.exception.data.DataAlreadyExistsException;
 import ru.mityushin.jobfinder.server.util.exception.data.DataNotFoundException;
@@ -58,6 +59,12 @@ public class PersonServiceImpl implements PersonService {
     @Override
     public PersonDTO createAdmin(PersonDTO personDTO) {
         return createWithRoles(personDTO, roleService.getAdminRoles());
+    }
+
+    @Override
+    public PersonDTO getCurrent() {
+        UUID principalIdentifier = JobFinderUtils.getPrincipalIdentifier();
+        return PersonMapper.map(personRepository.findByUuid(principalIdentifier));
     }
 
     @Transactional
