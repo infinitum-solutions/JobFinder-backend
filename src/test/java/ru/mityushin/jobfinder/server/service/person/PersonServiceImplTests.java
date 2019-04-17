@@ -3,6 +3,7 @@ package ru.mityushin.jobfinder.server.service.person;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -19,22 +20,30 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 import ru.mityushin.jobfinder.server.dto.PersonDTO;
 import ru.mityushin.jobfinder.server.model.Person;
+import ru.mityushin.jobfinder.server.model.Role;
 import ru.mityushin.jobfinder.server.repo.PersonRepository;
 import ru.mityushin.jobfinder.server.repo.PublicationRepository;
 import ru.mityushin.jobfinder.server.repo.RoleRepository;
 import ru.mityushin.jobfinder.server.service.role.RoleService;
+import ru.mityushin.jobfinder.server.util.JobFinderUtils;
 import ru.mityushin.jobfinder.server.util.enums.Sex;
+import ru.mityushin.jobfinder.server.util.exception.data.DataAlreadyExistsException;
 import ru.mityushin.jobfinder.server.util.exception.data.DataNotFoundException;
+import ru.mityushin.jobfinder.server.util.exception.data.MissingRequiredParametersException;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static junit.framework.TestCase.assertEquals;
+import static org.mockito.AdditionalAnswers.returnsFirstArg;
 
 @RunWith(PowerMockRunner.class)
 @PowerMockRunnerDelegate(SpringRunner.class)
 @PrepareForTest({
+        UUID.class,
+        JobFinderUtils.class,
+        PersonServiceImpl.class
 })
 @SpringBootTest
 @ContextConfiguration(loader = AnnotationConfigContextLoader.class)
@@ -44,6 +53,10 @@ public class PersonServiceImplTests {
     private Person defaultPerson;
     private Person defaultDeletedPerson;
     private PersonDTO defaultPersonDto;
+    private PersonDTO defaultAdminDto;
+    private PersonDTO defaultUserDto;
+    private Role adminRole;
+    private Role userRole;
 
     @Autowired
     private PersonRepository personRepository;
@@ -134,6 +147,45 @@ public class PersonServiceImplTests {
                 .sex(Sex.MALE)
                 .country("Russia")
                 .build();
+        adminRole = Role.builder()
+                .id(1L)
+                .name("ADMIN")
+                .persons(new HashSet<>())
+                .build();
+        userRole = Role.builder()
+                .id(1L)
+                .name("USER")
+                .persons(new HashSet<>())
+                .build();
+        defaultAdminDto = PersonDTO.builder()
+                .uuid(DEFAULT_UUID)
+                .username("user")
+                .password("pswd")
+                .oldPassword(null)
+                .firstName("name")
+                .lastName("last")
+                .sex(Sex.MALE)
+                .roles(Collections.singletonList("ADMIN"))
+                .country("Russia")
+                .build();
+        defaultUserDto = PersonDTO.builder()
+                .uuid(DEFAULT_UUID)
+                .username("user")
+                .password("pswd")
+                .oldPassword(null)
+                .firstName("name")
+                .lastName("last")
+                .sex(Sex.MALE)
+                .roles(Collections.singletonList("USER"))
+                .country("Russia")
+                .build();
+
+        PowerMockito.when(personRepository.save(Mockito.any(Person.class))).then(returnsFirstArg());
+        PowerMockito.when(encoder.encode(Mockito.anyString())).then(returnsFirstArg());
+        PowerMockito.when(roleService.getAdminRoles()).thenReturn(Stream.of(adminRole)
+                .collect(Collectors.toCollection(HashSet::new)));
+        PowerMockito.when(roleService.getAdminRoles()).thenReturn(Stream.of(userRole)
+                .collect(Collectors.toCollection(HashSet::new)));
     }
 
     @Test
@@ -158,5 +210,58 @@ public class PersonServiceImplTests {
     public void find() {
         PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
         assertEquals(defaultPersonDto, personService.find(DEFAULT_UUID));
+    }
+
+    @Test(expected = MissingRequiredParametersException.class)
+    public void createAdminWithoutUsername() {
+        PowerMockito.when(personRepository.existsByUsername(defaultPersonDto.getUsername())).thenReturn(false);
+        personService.createAdmin(PersonDTO.builder().password("pswd").build());
+    }
+
+    @Test(expected = MissingRequiredParametersException.class)
+    public void createAdminWithoutPassword() {
+        PowerMockito.when(personRepository.existsByUsername(defaultPersonDto.getUsername())).thenReturn(false);
+        personService.createAdmin(PersonDTO.builder().username("user").build());
+    }
+
+    @Test(expected = DataAlreadyExistsException.class)
+    public void createAdminExisting() {
+        PowerMockito.when(personRepository.existsByUsername(defaultPersonDto.getUsername())).thenReturn(true);
+        personService.createAdmin(defaultPersonDto);
+    }
+
+    @Test
+    public void createAdmin() {
+        PowerMockito.mockStatic(UUID.class);
+        PowerMockito.when(UUID.randomUUID()).thenReturn(DEFAULT_UUID);
+        PowerMockito.when(personRepository.existsByUsername(defaultPersonDto.getUsername())).thenReturn(false);
+        assertEquals(defaultAdminDto, personService.createAdmin(defaultPersonDto));
+    }
+
+
+    @Test(expected = MissingRequiredParametersException.class)
+    public void createUserWithoutUsername() {
+        PowerMockito.when(personRepository.existsByUsername(defaultPersonDto.getUsername())).thenReturn(false);
+        personService.createUser(PersonDTO.builder().password("pswd").build());
+    }
+
+    @Test(expected = MissingRequiredParametersException.class)
+    public void createUserWithoutPassword() {
+        PowerMockito.when(personRepository.existsByUsername(defaultPersonDto.getUsername())).thenReturn(false);
+        personService.createUser(PersonDTO.builder().username("user").build());
+    }
+
+    @Test(expected = DataAlreadyExistsException.class)
+    public void createUserExisting() {
+        PowerMockito.when(personRepository.existsByUsername(defaultPersonDto.getUsername())).thenReturn(true);
+        personService.createUser(defaultPersonDto);
+    }
+
+    @Test
+    public void createUser() {
+        PowerMockito.mockStatic(UUID.class);
+        PowerMockito.when(UUID.randomUUID()).thenReturn(DEFAULT_UUID);
+        PowerMockito.when(personRepository.existsByUsername(defaultPersonDto.getUsername())).thenReturn(false);
+        assertEquals(defaultUserDto, personService.createUser(defaultPersonDto));
     }
 }
