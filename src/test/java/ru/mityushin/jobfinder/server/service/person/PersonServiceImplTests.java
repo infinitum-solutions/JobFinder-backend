@@ -11,7 +11,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -263,5 +262,20 @@ public class PersonServiceImplTests {
         PowerMockito.when(UUID.randomUUID()).thenReturn(DEFAULT_UUID);
         PowerMockito.when(personRepository.existsByUsername(defaultPersonDto.getUsername())).thenReturn(false);
         assertEquals(defaultUserDto, personService.createUser(defaultPersonDto));
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void getCurrentNotExist() {
+        PowerMockito.mockStatic(JobFinderUtils.class);
+        PowerMockito.when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
+        personService.getCurrent();
+    }
+
+    @Test
+    public void getCurrent() {
+        PowerMockito.mockStatic(JobFinderUtils.class);
+        PowerMockito.when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
+        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
+        assertEquals(defaultPersonDto, personService.getCurrent());
     }
 }
