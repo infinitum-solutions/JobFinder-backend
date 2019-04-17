@@ -1,6 +1,7 @@
 package ru.mityushin.jobfinder.server.dto;
 
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import javax.validation.constraints.NotNull;
@@ -9,6 +10,7 @@ import java.util.UUID;
 
 @Builder
 @Getter
+@EqualsAndHashCode
 public class OrganizationDTO {
     private UUID uuid;
     private UUID creatorUuid;
