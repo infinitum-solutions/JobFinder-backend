@@ -99,7 +99,7 @@ public class OrganizationServiceImpl implements OrganizationService {
             throw new DataNotFoundException("This organization has been deleted or has not been created yet.");
         }
         Person currentPerson = getCurrentPerson();
-        log.info("CURRENT: " + currentPerson);
+        log.info("CURRENT: {}", currentPerson);
         boolean added = organization.getSubscribers().add(currentPerson);
         if (!added) {
             throw new DataAlreadyExistsException("You has been subscribed to this organization yet.");

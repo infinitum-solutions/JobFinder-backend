@@ -21,10 +21,13 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 import ru.mityushin.jobfinder.server.dto.OrganizationDTO;
 import ru.mityushin.jobfinder.server.model.Organization;
+import ru.mityushin.jobfinder.server.model.Person;
 import ru.mityushin.jobfinder.server.repo.OrganizationRepository;
 import ru.mityushin.jobfinder.server.repo.PersonRepository;
 import ru.mityushin.jobfinder.server.util.JobFinderUtils;
+import ru.mityushin.jobfinder.server.util.enums.Sex;
 import ru.mityushin.jobfinder.server.util.exception.PermissionDeniedException;
+import ru.mityushin.jobfinder.server.util.exception.data.DataAlreadyExistsException;
 import ru.mityushin.jobfinder.server.util.exception.data.DataNotFoundException;
 import ru.mityushin.jobfinder.server.util.exception.data.MissingRequiredParametersException;
 
@@ -50,8 +53,11 @@ public class OrganizationServiceImplTests {
     private static final UUID DEFAULT_UUID = UUID.fromString("01234567-89ab-cdef-0123-456789abcdef");
     private static Organization defaultOrganization;
     private static Organization defaultDeletedOrganization;
+    private static Organization defaultOrganizationWithSubscriber;
     private static OrganizationDTO defaultOrganizationDTO;
     private static OrganizationDTO newOrganizationDTO;
+    private static OrganizationDTO defaultOrganizationWithSubscriberDTO;
+    private static Person defaultPerson;
 
     @Autowired
     private OrganizationRepository organizationRepository;
@@ -120,6 +126,35 @@ public class OrganizationServiceImplTests {
                 .title("NewTitle")
                 .description("description")
                 .subscribersCount(0)
+                .build();
+        defaultPerson = Person.builder()
+                .id(1L)
+                .uuid(DEFAULT_UUID)
+                .username("user")
+                .password("pass")
+                .firstName("name")
+                .lastName("last")
+                .country("Russia")
+                .sex(Sex.MALE)
+                .deleted(false)
+                .organizations(new HashSet<>())
+                .build();
+        defaultOrganizationWithSubscriber = Organization.builder()
+                .id(1L)
+                .uuid(DEFAULT_UUID)
+                .creatorUuid(DEFAULT_UUID)
+                .title("Title")
+                .description("description")
+                .deleted(false)
+                .subscribers(new HashSet<>())
+                .build();
+        defaultOrganizationWithSubscriber.getSubscribers().add(defaultPerson);
+        defaultOrganizationWithSubscriberDTO = OrganizationDTO.builder()
+                .uuid(DEFAULT_UUID)
+                .creatorUuid(DEFAULT_UUID)
+                .title("Title")
+                .description("description")
+                .subscribersCount(1)
                 .build();
         PowerMockito.mockStatic(JobFinderUtils.class);
         PowerMockito.mockStatic(JobFinderUtils.class);
@@ -227,4 +262,81 @@ public class OrganizationServiceImplTests {
 //        PowerMockito.when(organizationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultOrganization);
 //        assertEquals(defaultOrganizationDTO, organizationService.delete(DEFAULT_UUID));
 //    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void getSubscribersWithoutUuid() {
+        organizationService.getSubscribers(null);
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void getSubscribersOnDeleted() {
+        PowerMockito.when(organizationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultDeletedOrganization);
+        organizationService.getSubscribers(DEFAULT_UUID);
+    }
+
+    @Test
+    public void getSubscribers() {
+        PowerMockito.mockStatic(JobFinderUtils.class);
+        PowerMockito.when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
+        PowerMockito.when(organizationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultOrganization);
+        assertEquals(Collections.EMPTY_LIST, organizationService.getSubscribers(DEFAULT_UUID));
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void subscribeWithoutUuid() {
+        organizationService.subscribe(null);
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void subscribeOnDeleted() {
+        PowerMockito.when(organizationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultDeletedOrganization);
+        organizationService.subscribe(DEFAULT_UUID);
+    }
+
+    @Test(expected = DataAlreadyExistsException.class)
+    public void subscribeSubscribed() {
+        PowerMockito.mockStatic(JobFinderUtils.class);
+        PowerMockito.when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
+        PowerMockito.when(organizationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultOrganizationWithSubscriber);
+        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
+        organizationService.subscribe(DEFAULT_UUID);
+    }
+
+    @Test
+    public void subscribe() {
+        PowerMockito.mockStatic(JobFinderUtils.class);
+        PowerMockito.when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
+        PowerMockito.when(organizationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultOrganization);
+        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
+        assertEquals(defaultOrganizationWithSubscriberDTO, organizationService.subscribe(DEFAULT_UUID));
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void unsubscribeWithoutUuid() {
+        organizationService.unsubscribe(null);
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void unsubscribeOnDeleted() {
+        PowerMockito.when(organizationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultDeletedOrganization);
+        organizationService.unsubscribe(DEFAULT_UUID);
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void unsubscribeUnsubscribed() {
+        PowerMockito.mockStatic(JobFinderUtils.class);
+        PowerMockito.when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
+        PowerMockito.when(organizationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultOrganization);
+        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
+        organizationService.unsubscribe(DEFAULT_UUID);
+    }
+
+    @Test
+    public void unsubscribe() {
+        PowerMockito.mockStatic(JobFinderUtils.class);
+        PowerMockito.when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
+        PowerMockito.when(organizationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultOrganizationWithSubscriber);
+        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
+        assertEquals(defaultOrganizationDTO, organizationService.unsubscribe(DEFAULT_UUID));
+    }
 }
