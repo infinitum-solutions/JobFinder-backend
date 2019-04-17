@@ -128,7 +128,7 @@ public class OrganizationServiceImplTests {
 
     @Before
     public void before() {
-        // Tests crashes without this method
+        PowerMockito.when(organizationRepository.save(Mockito.any(Organization.class))).then(returnsFirstArg());
     }
 
     @After
@@ -171,7 +171,6 @@ public class OrganizationServiceImplTests {
         PowerMockito.mockStatic(UUID.class);
         PowerMockito.when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
         PowerMockito.when(UUID.randomUUID()).thenReturn(DEFAULT_UUID);
-        PowerMockito.when(organizationRepository.save(Mockito.any(Organization.class))).then(returnsFirstArg());
         assertEquals(defaultOrganizationDTO, organizationService.create(defaultOrganizationDTO));
     }
 
@@ -201,4 +200,31 @@ public class OrganizationServiceImplTests {
         PowerMockito.when(organizationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultOrganization);
         assertEquals(newOrganizationDTO, organizationService.update(DEFAULT_UUID, newOrganizationDTO));
     }
+
+    @Test(expected = DataNotFoundException.class)
+    public void deleteWithoutUuid() {
+        organizationService.delete(null);
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void deleteDeleted() {
+        PowerMockito.when(organizationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultDeletedOrganization);
+        organizationService.delete(DEFAULT_UUID);
+    }
+
+    @Test(expected = PermissionDeniedException.class)
+    public void deleteWithoutPermissions() {
+        PowerMockito.mockStatic(JobFinderUtils.class);
+        PowerMockito.when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(UUID.randomUUID());
+        PowerMockito.when(organizationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultOrganization);
+        organizationService.delete(DEFAULT_UUID);
+    }
+
+//    @Test
+//    public void delete() {
+//        PowerMockito.mockStatic(JobFinderUtils.class);
+//        PowerMockito.when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
+//        PowerMockito.when(organizationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultOrganization);
+//        assertEquals(defaultOrganizationDTO, organizationService.delete(DEFAULT_UUID));
+//    }
 }
