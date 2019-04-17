@@ -26,6 +26,7 @@ import ru.mityushin.jobfinder.server.repo.RoleRepository;
 import ru.mityushin.jobfinder.server.service.role.RoleService;
 import ru.mityushin.jobfinder.server.util.JobFinderUtils;
 import ru.mityushin.jobfinder.server.util.enums.Sex;
+import ru.mityushin.jobfinder.server.util.exception.PermissionDeniedException;
 import ru.mityushin.jobfinder.server.util.exception.data.DataAlreadyExistsException;
 import ru.mityushin.jobfinder.server.util.exception.data.DataNotFoundException;
 import ru.mityushin.jobfinder.server.util.exception.data.MissingRequiredParametersException;
@@ -50,10 +51,11 @@ import static org.mockito.AdditionalAnswers.returnsFirstArg;
 public class PersonServiceImplTests {
     private static final UUID DEFAULT_UUID = UUID.randomUUID();
     private Person defaultPerson;
-    private Person defaultDeletedPerson;
     private PersonDTO defaultPersonDto;
     private PersonDTO defaultAdminDto;
     private PersonDTO defaultUserDto;
+    private PersonDTO newPersonDto;
+    private PersonDTO newPersonWithOldPswdDto;
     private Role adminRole;
     private Role userRole;
 
@@ -123,19 +125,6 @@ public class PersonServiceImplTests {
                 .locked(false)
                 .enabled(true)
                 .build();
-        defaultDeletedPerson = Person.builder()
-                .id(1L)
-                .uuid(DEFAULT_UUID)
-                .username("user")
-                .password("pswd")
-                .firstName("name")
-                .lastName("last")
-                .sex(Sex.MALE)
-                .country("Russia")
-                .deleted(true)
-                .locked(false)
-                .enabled(true)
-                .build();
         defaultPersonDto = PersonDTO.builder()
                 .uuid(DEFAULT_UUID)
                 .username("user")
@@ -178,6 +167,26 @@ public class PersonServiceImplTests {
                 .roles(Collections.singletonList("USER"))
                 .country("Russia")
                 .build();
+        newPersonDto = PersonDTO.builder()
+                .uuid(DEFAULT_UUID)
+                .username("resu")
+                .password("pswd")
+                .oldPassword(null)
+                .firstName("name")
+                .lastName("last")
+                .sex(Sex.MALE)
+                .country("Russia")
+                .build();
+        newPersonWithOldPswdDto = PersonDTO.builder()
+                .uuid(DEFAULT_UUID)
+                .username("resu")
+                .password("pswd")
+                .oldPassword("pass")
+                .firstName("name")
+                .lastName("last")
+                .sex(Sex.MALE)
+                .country("Russia")
+                .build();
 
         PowerMockito.when(personRepository.save(Mockito.any(Person.class))).then(returnsFirstArg());
         PowerMockito.when(encoder.encode(Mockito.anyString())).then(returnsFirstArg());
@@ -201,7 +210,8 @@ public class PersonServiceImplTests {
 
     @Test(expected = DataNotFoundException.class)
     public void findDeleted() {
-        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultDeletedPerson);
+        defaultPerson.setDeleted(true);
+        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
         personService.find(DEFAULT_UUID);
     }
 
@@ -277,5 +287,43 @@ public class PersonServiceImplTests {
         PowerMockito.when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
         PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
         assertEquals(defaultPersonDto, personService.getCurrent());
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void updateWithoutUuid() {
+        personService.update(null, newPersonDto);
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void updateDeleted() {
+        defaultPerson.setDeleted(true);
+        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
+        personService.update(DEFAULT_UUID, newPersonDto);
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void updateLocked() {
+        defaultPerson.setLocked(true);
+        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
+        personService.update(DEFAULT_UUID, newPersonDto);
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void updateDisabled() {
+        defaultPerson.setEnabled(false);
+        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
+        personService.update(DEFAULT_UUID, newPersonDto);
+    }
+
+    @Test(expected = PermissionDeniedException.class)
+    public void updateWithoutPermissions() {
+        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
+        personService.update(DEFAULT_UUID, newPersonWithOldPswdDto);
+    }
+
+    @Test
+    public void update() {
+        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
+        assertEquals(newPersonDto, personService.update(DEFAULT_UUID, newPersonDto));
     }
 }
