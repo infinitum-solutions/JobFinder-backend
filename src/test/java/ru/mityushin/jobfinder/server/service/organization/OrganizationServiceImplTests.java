@@ -25,6 +25,7 @@ import ru.mityushin.jobfinder.server.repo.OrganizationRepository;
 import ru.mityushin.jobfinder.server.repo.PersonRepository;
 import ru.mityushin.jobfinder.server.util.JobFinderUtils;
 import ru.mityushin.jobfinder.server.util.exception.data.DataNotFoundException;
+import ru.mityushin.jobfinder.server.util.exception.data.MissingRequiredParametersException;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -32,11 +33,14 @@ import java.util.HashSet;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.AdditionalAnswers.returnsFirstArg;
 
 @RunWith(PowerMockRunner.class)
 @PowerMockRunnerDelegate(SpringRunner.class)
 @PrepareForTest({
-        JobFinderUtils.class
+        UUID.class,
+        JobFinderUtils.class,
+        OrganizationServiceImpl.class // Required by UUID mocking
 })
 @SpringBootTest
 @ContextConfiguration(loader = AnnotationConfigContextLoader.class)
@@ -142,5 +146,20 @@ public class OrganizationServiceImplTests {
     public void find() {
         PowerMockito.when(organizationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultOrganization);
         assertEquals(defaultOrganizationDTO, organizationService.find(DEFAULT_UUID));
+    }
+
+    @Test(expected = MissingRequiredParametersException.class)
+    public void createWithoutTitle() {
+        organizationService.create(OrganizationDTO.builder().build());
+    }
+
+    @Test
+    public void create() {
+        PowerMockito.mockStatic(JobFinderUtils.class);
+        PowerMockito.mockStatic(UUID.class);
+        PowerMockito.when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
+        PowerMockito.when(UUID.randomUUID()).thenReturn(DEFAULT_UUID);
+        PowerMockito.when(organizationRepository.save(Mockito.any(Organization.class))).then(returnsFirstArg());
+        assertEquals(defaultOrganizationDTO, organizationService.create(defaultOrganizationDTO));
     }
 }
