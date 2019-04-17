@@ -92,7 +92,7 @@ public class OrganizationServiceImplTests {
     }
 
     @Before
-    public void beforeClass() {
+    public void before() {
         defaultOrganization = Organization.builder()
                 .id(1L)
                 .uuid(DEFAULT_UUID)
