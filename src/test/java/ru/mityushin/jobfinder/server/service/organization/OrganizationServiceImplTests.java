@@ -24,6 +24,7 @@ import ru.mityushin.jobfinder.server.model.Organization;
 import ru.mityushin.jobfinder.server.repo.OrganizationRepository;
 import ru.mityushin.jobfinder.server.repo.PersonRepository;
 import ru.mityushin.jobfinder.server.util.JobFinderUtils;
+import ru.mityushin.jobfinder.server.util.exception.PermissionDeniedException;
 import ru.mityushin.jobfinder.server.util.exception.data.DataNotFoundException;
 import ru.mityushin.jobfinder.server.util.exception.data.MissingRequiredParametersException;
 
@@ -50,6 +51,7 @@ public class OrganizationServiceImplTests {
     private static Organization defaultOrganization;
     private static Organization defaultDeletedOrganization;
     private static OrganizationDTO defaultOrganizationDTO;
+    private static OrganizationDTO newOrganizationDTO;
 
     @Autowired
     private OrganizationRepository organizationRepository;
@@ -112,16 +114,26 @@ public class OrganizationServiceImplTests {
                 .description("description")
                 .subscribersCount(0)
                 .build();
+        newOrganizationDTO = OrganizationDTO.builder()
+                .uuid(DEFAULT_UUID)
+                .creatorUuid(DEFAULT_UUID)
+                .title("NewTitle")
+                .description("description")
+                .subscribersCount(0)
+                .build();
+        PowerMockito.mockStatic(JobFinderUtils.class);
         PowerMockito.mockStatic(JobFinderUtils.class);
         PowerMockito.when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
     }
 
     @Before
     public void before() {
+        // Tests crashes without this method
     }
 
     @After
     public void after() {
+        // Tests crashes without this method
     }
 
     @Test
@@ -161,5 +173,32 @@ public class OrganizationServiceImplTests {
         PowerMockito.when(UUID.randomUUID()).thenReturn(DEFAULT_UUID);
         PowerMockito.when(organizationRepository.save(Mockito.any(Organization.class))).then(returnsFirstArg());
         assertEquals(defaultOrganizationDTO, organizationService.create(defaultOrganizationDTO));
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void updateWithoutUuid() {
+        organizationService.update(null, newOrganizationDTO);
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void updateDeleted() {
+        PowerMockito.when(organizationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultDeletedOrganization);
+        organizationService.update(DEFAULT_UUID, newOrganizationDTO);
+    }
+
+    @Test(expected = PermissionDeniedException.class)
+    public void updateWithoutPermissions() {
+        PowerMockito.mockStatic(JobFinderUtils.class);
+        PowerMockito.when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(UUID.randomUUID());
+        PowerMockito.when(organizationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultOrganization);
+        organizationService.update(DEFAULT_UUID, newOrganizationDTO);
+    }
+
+    @Test
+    public void update() {
+        PowerMockito.mockStatic(JobFinderUtils.class);
+        PowerMockito.when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
+        PowerMockito.when(organizationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultOrganization);
+        assertEquals(newOrganizationDTO, organizationService.update(DEFAULT_UUID, newOrganizationDTO));
     }
 }
