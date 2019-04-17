@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static junit.framework.TestCase.assertEquals;
+import static junit.framework.TestCase.assertTrue;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
 
 @RunWith(PowerMockRunner.class)
@@ -325,5 +326,38 @@ public class PersonServiceImplTests {
     public void update() {
         PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
         assertEquals(newPersonDto, personService.update(DEFAULT_UUID, newPersonDto));
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void deleteWithoutUuid() {
+        personService.delete(null);
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void deleteDeleted() {
+        defaultPerson.setDeleted(true);
+        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
+        personService.delete(DEFAULT_UUID);
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void deleteLocked() {
+        defaultPerson.setLocked(true);
+        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
+        personService.delete(DEFAULT_UUID);
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void deleteDisabled() {
+        defaultPerson.setEnabled(false);
+        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
+        personService.delete(DEFAULT_UUID);
+    }
+
+    @Test
+    public void delete() {
+        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
+        assertEquals(defaultPersonDto, personService.delete(DEFAULT_UUID));
+        assertTrue(defaultPerson.getDeleted());
     }
 }
