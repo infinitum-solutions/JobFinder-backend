@@ -1,8 +1,6 @@
 package ru.mityushin.jobfinder.server.service.organization;
 
-import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -51,13 +49,13 @@ import static org.mockito.AdditionalAnswers.returnsFirstArg;
 @PowerMockIgnore({"com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "javax.management.*"})
 public class OrganizationServiceImplTests {
     private static final UUID DEFAULT_UUID = UUID.fromString("01234567-89ab-cdef-0123-456789abcdef");
-    private static Organization defaultOrganization;
-    private static Organization defaultDeletedOrganization;
-    private static Organization defaultOrganizationWithSubscriber;
-    private static OrganizationDTO defaultOrganizationDTO;
-    private static OrganizationDTO newOrganizationDTO;
-    private static OrganizationDTO defaultOrganizationWithSubscriberDTO;
-    private static Person defaultPerson;
+    private Organization defaultOrganization;
+    private Organization defaultDeletedOrganization;
+    private Organization defaultOrganizationWithSubscriber;
+    private OrganizationDTO defaultOrganizationDTO;
+    private OrganizationDTO newOrganizationDTO;
+    private OrganizationDTO defaultOrganizationWithSubscriberDTO;
+    private Person defaultPerson;
 
     @Autowired
     private OrganizationRepository organizationRepository;
@@ -93,8 +91,8 @@ public class OrganizationServiceImplTests {
         }
     }
 
-    @BeforeClass
-    public static void beforeClass() {
+    @Before
+    public void beforeClass() {
         defaultOrganization = Organization.builder()
                 .id(1L)
                 .uuid(DEFAULT_UUID)
@@ -157,18 +155,8 @@ public class OrganizationServiceImplTests {
                 .subscribersCount(1)
                 .build();
         PowerMockito.mockStatic(JobFinderUtils.class);
-        PowerMockito.mockStatic(JobFinderUtils.class);
         PowerMockito.when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
-    }
-
-    @Before
-    public void before() {
         PowerMockito.when(organizationRepository.save(Mockito.any(Organization.class))).then(returnsFirstArg());
-    }
-
-    @After
-    public void after() {
-        // Tests crashes without this method
     }
 
     @Test
@@ -255,13 +243,13 @@ public class OrganizationServiceImplTests {
         organizationService.delete(DEFAULT_UUID);
     }
 
-//    @Test
-//    public void delete() {
-//        PowerMockito.mockStatic(JobFinderUtils.class);
-//        PowerMockito.when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
-//        PowerMockito.when(organizationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultOrganization);
-//        assertEquals(defaultOrganizationDTO, organizationService.delete(DEFAULT_UUID));
-//    }
+    @Test
+    public void delete() {
+        PowerMockito.mockStatic(JobFinderUtils.class);
+        PowerMockito.when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
+        PowerMockito.when(organizationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultOrganization);
+        assertEquals(defaultOrganizationDTO, organizationService.delete(DEFAULT_UUID));
+    }
 
     @Test(expected = DataNotFoundException.class)
     public void getSubscribersWithoutUuid() {
