@@ -391,4 +391,28 @@ public class PersonServiceImplTests {
                 .collect(Collectors.toCollection(ArrayList::new))).build()));
         ;
     }
+
+    @Test(expected = DataNotFoundException.class)
+    public void deleteRolePersonWithoutUuid() {
+        personService.deleteRoleFromPerson(null, "USER");
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void deleteUnsupportedRoleFromPerson() {
+        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
+        personService.deleteRoleFromPerson(DEFAULT_UUID, "LUSER");
+    }
+
+    @Test(expected = DataAlreadyExistsException.class)
+    public void deleteRoleFromPersonThatHeAlreadyHas() {
+        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
+        personService.deleteRoleFromPerson(DEFAULT_UUID, "USER");
+    }
+
+    @Test
+    public void deleteRoleFromPerson() {
+        defaultPerson.getRoles().add(userRole);
+        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
+        assertEquals(defaultUserDto, personService.deleteRoleFromPerson(DEFAULT_UUID, "USER"));
+    }
 }
