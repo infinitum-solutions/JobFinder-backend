@@ -125,6 +125,7 @@ public class PersonServiceImplTests {
                 .deleted(false)
                 .locked(false)
                 .enabled(true)
+                .roles(new HashSet<>())
                 .build();
         defaultPersonDto = PersonDTO.builder()
                 .uuid(DEFAULT_UUID)
