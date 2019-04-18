@@ -18,7 +18,9 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 import ru.mityushin.jobfinder.server.dto.PersonDTO;
+import ru.mityushin.jobfinder.server.dto.PublicationDTO;
 import ru.mityushin.jobfinder.server.model.Person;
+import ru.mityushin.jobfinder.server.model.Publication;
 import ru.mityushin.jobfinder.server.model.Role;
 import ru.mityushin.jobfinder.server.repo.PersonRepository;
 import ru.mityushin.jobfinder.server.repo.PublicationRepository;
@@ -59,6 +61,8 @@ public class PersonServiceImplTests {
     private PersonDTO newPersonWithOldPswdDto;
     private Role adminRole;
     private Role userRole;
+    private Publication defaultPublication;
+    private PublicationDTO defaultPublicationDTO;
 
     @Autowired
     private PersonRepository personRepository;
@@ -188,6 +192,24 @@ public class PersonServiceImplTests {
                 .lastName("last")
                 .sex(Sex.MALE)
                 .country("Russia")
+                .build();
+        defaultPublication = Publication.builder()
+                .id(1L)
+                .uuid(DEFAULT_UUID)
+                .authorUuid(DEFAULT_UUID)
+                .title("title")
+                .description("desc")
+                .content("content")
+                .visible(true)
+                .deleted(false)
+                .build();
+        defaultPublicationDTO = PublicationDTO.builder()
+                .uuid(DEFAULT_UUID)
+                .authorUuid(DEFAULT_UUID)
+                .title("title")
+                .description("desc")
+                .content("content")
+                .visible(true)
                 .build();
 
         PowerMockito.when(personRepository.save(Mockito.any(Person.class))).then(returnsFirstArg());
@@ -415,5 +437,17 @@ public class PersonServiceImplTests {
         defaultPerson.getRoles().add(userRole);
         PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
         assertEquals(defaultUserDto, personService.deleteRoleFromPerson(DEFAULT_UUID, "USER"));
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void findPersonPublicationsWithoutUuid() {
+        personService.findPersonPublications(null);
+    }
+
+    @Test
+    public void findPersonPublications() {
+        PowerMockito.when(publicationRepository.findAllByAuthorUuid(DEFAULT_UUID)).thenReturn(
+                Collections.singletonList(defaultPublication));
+        assertEquals(Collections.singletonList(defaultPublicationDTO), personService.findPersonPublications(DEFAULT_UUID));
     }
 }
