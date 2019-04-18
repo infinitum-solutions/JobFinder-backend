@@ -45,7 +45,7 @@ public class AliveImplTest {
     }
 
     @Test
-    public void sayAlive() throws Exception {
+    public void sayAlive() {
         Whitebox.setInternalState(AliveImpl.class, "LOG", log);
         aliveService.sayAlive();
         Mockito.verify(log, Mockito.times(1)).info("I'm alive!");
