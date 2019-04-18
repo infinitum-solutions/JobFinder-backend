@@ -6,6 +6,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
+import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.PowerMockRunnerDelegate;
@@ -41,10 +42,11 @@ import static org.powermock.api.mockito.PowerMockito.when;
 @PrepareForTest(JobFinderUtils.class)
 @SpringBootTest
 @ContextConfiguration(loader = AnnotationConfigContextLoader.class)
+@PowerMockIgnore({"com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "javax.management.*"})
 public class PublicationServiceImplTest {
     private static final UUID DEFAULT_UUID = UUID.fromString("01234567-89ab-cdef-0123-456789abcdef");
-    private static Publication defaultPublication;
-    private static PublicationDTO defaultPublicationDTO;
+    private Publication defaultPublication;
+    private PublicationDTO defaultPublicationDTO;
 
     @Autowired
     private PublicationRepository publicationRepository;
@@ -65,8 +67,8 @@ public class PublicationServiceImplTest {
         }
     }
 
-    @BeforeClass
-    public static void beforeClass() {
+    @Before
+    public void before() {
         defaultPublication = Publication.builder()
                 .id(1L)
                 .uuid(DEFAULT_UUID)
@@ -86,49 +88,32 @@ public class PublicationServiceImplTest {
                 .visible(true)
                 .build();
         mockStatic(JobFinderUtils.class);
-        when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
-    }
-
-    @Before
-    public void before() {
-//        when(publicationRepository.findAll()).thenThrow(RuntimeException.class);
-        when(publicationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPublication);
-//        when(publicationRepository.save(any(Publication.class))).then(returnsFirstArg());
-    }
-
-    @After
-    public void after() {
-        reset(publicationRepository);
-    }
-
-    @Test
-    public void mockUtilsStaticMethod() {
-        verifyStatic(JobFinderUtils.class);
+        when(publicationRepository.save(any(Publication.class))).then(returnsFirstArg());
     }
 
     @Test
     public void findAll() {
         when(publicationRepository.findAll()).thenReturn(Collections.singletonList(defaultPublication));
         Collection<PublicationDTO> publications = publicationService.findAll();
-        assertEquals(
-                Collections.singletonList(defaultPublicationDTO),
-                publications);
-        verify(publicationRepository.findAll(), times(1));
+        assertEquals(Collections.singletonList(defaultPublicationDTO), publications);
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void findWithoutUuid() {
+        publicationService.find(null);
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void findDeleted() {
+        defaultPublication.setDeleted(true);
+        when(publicationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPublication);
+        publicationService.find(DEFAULT_UUID);
     }
 
     @Test
     public void find() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Test
-    public void create() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Test
-    public void update() {
-        throw new UnsupportedOperationException();
+        when(publicationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPublication);
+        assertEquals(defaultPublicationDTO, publicationService.find(DEFAULT_UUID));
     }
 
     @Test(expected = DataNotFoundException.class)
@@ -140,7 +125,7 @@ public class PublicationServiceImplTest {
     @Test
     public void deleteExistingPublication() {
         when(publicationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPublication);
-        when(publicationRepository.save(any(Publication.class))).then(returnsFirstArg());
+        when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
         PublicationDTO dto = publicationService.delete(DEFAULT_UUID);
         assertEquals(defaultPublicationDTO, dto);
     }
