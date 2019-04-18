@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class AliveImpl implements Alive {
-    private final static Logger LOG = LoggerFactory.getLogger(AliveImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AliveImpl.class);
 
     @Scheduled(cron = "0 */10 * * * *")
     @Override
