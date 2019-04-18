@@ -22,6 +22,7 @@ import ru.mityushin.jobfinder.server.dto.PublicationDTO;
 import ru.mityushin.jobfinder.server.model.Publication;
 import ru.mityushin.jobfinder.server.repo.PublicationRepository;
 import ru.mityushin.jobfinder.server.util.JobFinderUtils;
+import ru.mityushin.jobfinder.server.util.exception.PermissionDeniedException;
 import ru.mityushin.jobfinder.server.util.exception.data.DataNotFoundException;
 
 import java.util.Collection;
@@ -52,6 +53,7 @@ public class PublicationServiceImplTest {
     private static final UUID DEFAULT_UUID = UUID.fromString("01234567-89ab-cdef-0123-456789abcdef");
     private Publication defaultPublication;
     private PublicationDTO defaultPublicationDTO;
+    private PublicationDTO newPublicationDTO;
 
     @Autowired
     private PublicationRepository publicationRepository;
@@ -92,6 +94,14 @@ public class PublicationServiceImplTest {
                 .content("Content-content-content")
                 .visible(true)
                 .build();
+        newPublicationDTO = PublicationDTO.builder()
+                .uuid(DEFAULT_UUID)
+                .authorUuid(DEFAULT_UUID)
+                .title("Title")
+                .description("description")
+                .content("Content")
+                .visible(true)
+                .build();
         mockStatic(JobFinderUtils.class);
         when(publicationRepository.save(any(Publication.class))).then(returnsFirstArg());
     }
@@ -127,6 +137,32 @@ public class PublicationServiceImplTest {
         when(UUID.randomUUID()).thenReturn(DEFAULT_UUID);
         when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
         assertEquals(defaultPublicationDTO, publicationService.create(defaultPublicationDTO));
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void updateWithoutUuid() {
+        publicationService.update(null, newPublicationDTO);
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void updateDeleted() {
+        defaultPublication.setDeleted(true);
+        when(publicationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPublication);
+        publicationService.update(DEFAULT_UUID, newPublicationDTO);
+    }
+
+    @Test(expected = PermissionDeniedException.class)
+    public void updateWithoutPermissions() {
+        when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(UUID.randomUUID());
+        when(publicationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPublication);
+        publicationService.update(DEFAULT_UUID, newPublicationDTO);
+    }
+
+    @Test
+    public void update() {
+        when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
+        when(publicationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPublication);
+        assertEquals(newPublicationDTO, publicationService.update(DEFAULT_UUID, newPublicationDTO));
     }
 
     @Test(expected = DataNotFoundException.class)
