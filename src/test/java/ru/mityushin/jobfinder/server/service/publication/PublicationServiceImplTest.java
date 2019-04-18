@@ -6,6 +6,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
+import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -39,7 +40,11 @@ import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(PowerMockRunner.class)
 @PowerMockRunnerDelegate(SpringRunner.class)
-@PrepareForTest(JobFinderUtils.class)
+@PrepareForTest({
+        UUID.class,
+        JobFinderUtils.class,
+        PublicationServiceImpl.class
+})
 @SpringBootTest
 @ContextConfiguration(loader = AnnotationConfigContextLoader.class)
 @PowerMockIgnore({"com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "javax.management.*"})
@@ -114,6 +119,14 @@ public class PublicationServiceImplTest {
     public void find() {
         when(publicationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPublication);
         assertEquals(defaultPublicationDTO, publicationService.find(DEFAULT_UUID));
+    }
+
+    @Test
+    public void create() {
+        PowerMockito.mockStatic(UUID.class);
+        when(UUID.randomUUID()).thenReturn(DEFAULT_UUID);
+        when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
+        assertEquals(defaultPublicationDTO, publicationService.create(defaultPublicationDTO));
     }
 
     @Test(expected = DataNotFoundException.class)
