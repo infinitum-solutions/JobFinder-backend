@@ -195,6 +195,8 @@ public class PersonServiceImplTests {
                 .collect(Collectors.toCollection(HashSet::new)));
         PowerMockito.when(roleService.getAdminRoles()).thenReturn(Stream.of(userRole)
                 .collect(Collectors.toCollection(HashSet::new)));
+        PowerMockito.when(roleRepository.findByName("ADMIN")).thenReturn(adminRole);
+        PowerMockito.when(roleRepository.findByName("USER")).thenReturn(userRole);
     }
 
     @Test
@@ -359,5 +361,34 @@ public class PersonServiceImplTests {
         PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
         assertEquals(defaultPersonDto, personService.delete(DEFAULT_UUID));
         assertTrue(defaultPerson.getDeleted());
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void addRoleToPersonWithoutUuid() {
+        personService.addRoleToPerson(null, PersonDTO.builder().roles(Stream.of("USER", "ADMIN")
+                .collect(Collectors.toCollection(ArrayList::new))).build());
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void addUnsupportedRoleToPerson() {
+        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
+        personService.addRoleToPerson(DEFAULT_UUID, PersonDTO.builder().roles(Stream.of("LUSER")
+                .collect(Collectors.toCollection(ArrayList::new))).build());
+    }
+
+    @Test(expected = DataAlreadyExistsException.class)
+    public void addRoleToPersonThatHeAlreadyHas() {
+        defaultPerson.getRoles().add(userRole);
+        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
+        personService.addRoleToPerson(DEFAULT_UUID, PersonDTO.builder().roles(Stream.of("USER")
+                .collect(Collectors.toCollection(ArrayList::new))).build());
+    }
+
+    @Test
+    public void addRoleToPerson() {
+        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
+        assertEquals(defaultUserDto, personService.addRoleToPerson(DEFAULT_UUID, PersonDTO.builder().roles(Stream.of("USER")
+                .collect(Collectors.toCollection(ArrayList::new))).build()));
+        ;
     }
 }
