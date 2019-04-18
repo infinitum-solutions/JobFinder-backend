@@ -1,8 +1,6 @@
 package ru.mityushin.jobfinder.server.service.publication;
 
-import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -32,11 +30,7 @@ import java.util.UUID;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.AdditionalAnswers.returnsFirstArg;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
-import static org.powermock.api.mockito.PowerMockito.verifyStatic;
+import static org.powermock.api.mockito.PowerMockito.mockStatic;;
 import static org.powermock.api.mockito.PowerMockito.when;
 
 @RunWith(PowerMockRunner.class)
@@ -166,16 +160,28 @@ public class PublicationServiceImplTest {
     }
 
     @Test(expected = DataNotFoundException.class)
-    public void deleteNonExistingPublication() {
+    public void deleteWithoutUuid() {
+        publicationService.delete(null);
+    }
+
+    @Test(expected = DataNotFoundException.class)
+    public void deleteDeleted() {
+        defaultPublication.setDeleted(true);
         when(publicationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPublication);
-        publicationService.delete(UUID.randomUUID());
+        publicationService.delete(DEFAULT_UUID);
+    }
+
+    @Test(expected = PermissionDeniedException.class)
+    public void deleteWithoutPermissions() {
+        when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(UUID.randomUUID());
+        when(publicationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPublication);
+        publicationService.delete(DEFAULT_UUID);
     }
 
     @Test
-    public void deleteExistingPublication() {
-        when(publicationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPublication);
+    public void delete() {
         when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
-        PublicationDTO dto = publicationService.delete(DEFAULT_UUID);
-        assertEquals(defaultPublicationDTO, dto);
+        when(publicationRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPublication);
+        assertEquals(defaultPublicationDTO, publicationService.delete(DEFAULT_UUID));
     }
 }
