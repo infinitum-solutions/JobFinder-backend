@@ -36,9 +36,9 @@ import static junit.framework.TestCase.*;
 public class ExtendedUserDetailsTests {
     private static final String USERNAME = "user";
     private static final String PASSWORD = "pswd";
-    private static final Boolean defaultLocked = false;
-    private static final Boolean defaultEnabled = true;
-    private static final UUID defaultUUID = UUID.randomUUID();
+    private static final Boolean DEFAULT_LOCKED = false;
+    private static final Boolean DEFAULT_ENABLED = true;
+    private static final UUID DEFAULT_UUID = UUID.randomUUID();
 
     private Set<Role> roles;
     private Set<SimpleGrantedAuthority> authorities;
@@ -80,9 +80,9 @@ public class ExtendedUserDetailsTests {
         PowerMockito.when(person.getUsername()).thenReturn(USERNAME);
         PowerMockito.when(person.getPassword()).thenReturn(PASSWORD);
         PowerMockito.when(person.getRoles()).thenReturn(roles);
-        PowerMockito.when(person.getLocked()).thenReturn(defaultLocked);
-        PowerMockito.when(person.getEnabled()).thenReturn(defaultEnabled);
-        PowerMockito.when(person.getUuid()).thenReturn(defaultUUID);
+        PowerMockito.when(person.getLocked()).thenReturn(DEFAULT_LOCKED);
+        PowerMockito.when(person.getEnabled()).thenReturn(DEFAULT_ENABLED);
+        PowerMockito.when(person.getUuid()).thenReturn(DEFAULT_UUID);
     }
 
     @After
@@ -151,6 +151,6 @@ public class ExtendedUserDetailsTests {
 
     @Test
     public void getIdentifier() {
-        assertEquals(defaultUUID, userDetails.getIdentifier());
+        assertEquals(DEFAULT_UUID, userDetails.getIdentifier());
     }
 }
