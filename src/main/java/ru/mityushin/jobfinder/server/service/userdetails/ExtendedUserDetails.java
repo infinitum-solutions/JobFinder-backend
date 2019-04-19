@@ -1,5 +1,6 @@
 package ru.mityushin.jobfinder.server.service.userdetails;
 
+import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -12,6 +13,7 @@ import java.util.Collection;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@EqualsAndHashCode
 @RequiredArgsConstructor
 public class ExtendedUserDetails implements UserDetails, Identifiable<UUID> {
 
