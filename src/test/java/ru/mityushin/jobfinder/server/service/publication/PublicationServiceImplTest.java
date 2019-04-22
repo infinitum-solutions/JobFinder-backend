@@ -1,5 +1,6 @@
 package ru.mityushin.jobfinder.server.service.publication;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -98,6 +99,11 @@ public class PublicationServiceImplTest {
                 .build();
         mockStatic(JobFinderUtils.class);
         when(publicationRepository.save(any(Publication.class))).then(returnsFirstArg());
+    }
+
+    @After
+    public void after() {
+        Mockito.reset(publicationRepository);
     }
 
     @Test
