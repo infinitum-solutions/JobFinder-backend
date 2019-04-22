@@ -87,6 +87,9 @@ public class OrganizationServiceImpl implements OrganizationService {
     @Override
     public Collection<PersonDTO> getSubscribers(UUID uuid) {
         Organization organization = organizationRepository.findByUuid(uuid);
+        if (isInaccessible(organization)) {
+            throw new DataNotFoundException("This organization has been deleted or has not been created yet.");
+        }
         return organization.getSubscribers().stream()
                 .map(PersonMapper::map)
                 .collect(Collectors.toList());

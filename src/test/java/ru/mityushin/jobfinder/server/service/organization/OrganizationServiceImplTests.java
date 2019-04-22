@@ -1,5 +1,6 @@
 package ru.mityushin.jobfinder.server.service.organization;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -157,6 +158,13 @@ public class OrganizationServiceImplTests {
         PowerMockito.mockStatic(JobFinderUtils.class);
         PowerMockito.when(JobFinderUtils.getPrincipalIdentifier()).thenReturn(DEFAULT_UUID);
         PowerMockito.when(organizationRepository.save(Mockito.any(Organization.class))).then(returnsFirstArg());
+    }
+
+    @After
+    public void after() {
+        Mockito.reset(organizationRepository);
+        Mockito.reset(personRepository);
+        Mockito.reset(log);
     }
 
     @Test
