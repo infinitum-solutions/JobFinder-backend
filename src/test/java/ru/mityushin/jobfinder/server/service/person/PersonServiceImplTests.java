@@ -130,6 +130,7 @@ public class PersonServiceImplTests {
                 .locked(false)
                 .enabled(true)
                 .roles(new HashSet<>())
+                .organizations(new HashSet<>())
                 .build();
         defaultPersonDto = PersonDTO.builder()
                 .uuid(DEFAULT_UUID)
