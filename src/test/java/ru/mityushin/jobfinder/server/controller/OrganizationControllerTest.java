@@ -16,8 +16,6 @@ import ru.mityushin.jobfinder.server.service.organization.OrganizationService;
 
 import java.util.UUID;
 
-import static org.junit.Assert.*;
-
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(loader = AnnotationConfigContextLoader.class)
 public class OrganizationControllerTest {
