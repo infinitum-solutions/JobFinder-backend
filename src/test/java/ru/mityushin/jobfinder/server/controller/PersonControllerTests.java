@@ -13,7 +13,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 import ru.mityushin.jobfinder.server.dto.PersonDTO;
 import ru.mityushin.jobfinder.server.service.person.PersonService;
-import ru.mityushin.jobfinder.server.service.person.PersonServiceImpl;
 import ru.mityushin.jobfinder.server.util.enums.Sex;
 
 import java.util.UUID;
