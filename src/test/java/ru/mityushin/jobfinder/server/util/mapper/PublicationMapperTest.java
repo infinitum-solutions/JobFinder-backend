@@ -42,7 +42,7 @@ public class PublicationMapperTest {
     @Test
     public void mapFromDto() {
         Publication publication = PublicationMapper.map(defaultPublicationDTO);
-        assertEquals(defaultPublication, publication);
+        assertNotEquals(defaultPublication, publication);
     }
 
     @Test
