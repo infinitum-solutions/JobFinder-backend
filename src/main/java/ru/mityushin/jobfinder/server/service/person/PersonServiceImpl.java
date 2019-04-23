@@ -64,7 +64,11 @@ public class PersonServiceImpl implements PersonService {
     @Override
     public PersonDTO getCurrent() {
         UUID principalIdentifier = JobFinderUtils.getPrincipalIdentifier();
-        return PersonMapper.map(personRepository.findByUuid(principalIdentifier));
+        Person person = personRepository.findByUuid(principalIdentifier);
+        if (person == null) {
+            throw new DataNotFoundException("This profile has been deleted or has not been created yet.");
+        }
+        return PersonMapper.map(person);
     }
 
     @Transactional
@@ -162,6 +166,10 @@ public class PersonServiceImpl implements PersonService {
 
     @Override
     public Collection<PublicationDTO> findPersonPublications(UUID uuid) {
+        Person person = personRepository.findByUuid(uuid);
+        if (person == null) {
+            throw new DataNotFoundException("This profile has been deleted or has not been created yet.");
+        }
         return publicationRepository.findAllByAuthorUuid(uuid).stream()
                 .map(PublicationMapper::map)
                 .collect(Collectors.toList());

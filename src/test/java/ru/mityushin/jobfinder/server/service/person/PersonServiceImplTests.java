@@ -1,5 +1,6 @@
 package ru.mityushin.jobfinder.server.service.person;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -55,8 +56,6 @@ public class PersonServiceImplTests {
     private static final UUID DEFAULT_UUID = UUID.randomUUID();
     private Person defaultPerson;
     private PersonDTO defaultPersonDto;
-    private PersonDTO defaultAdminDto;
-    private PersonDTO defaultUserDto;
     private PersonDTO newPersonDto;
     private PersonDTO newPersonWithOldPswdDto;
     private Role adminRole;
@@ -130,6 +129,7 @@ public class PersonServiceImplTests {
                 .locked(false)
                 .enabled(true)
                 .roles(new HashSet<>())
+                .organizations(new HashSet<>())
                 .build();
         defaultPersonDto = PersonDTO.builder()
                 .uuid(DEFAULT_UUID)
@@ -150,28 +150,6 @@ public class PersonServiceImplTests {
                 .id(1L)
                 .name("USER")
                 .persons(new HashSet<>())
-                .build();
-        defaultAdminDto = PersonDTO.builder()
-                .uuid(DEFAULT_UUID)
-                .username("user")
-                .password("pswd")
-                .oldPassword(null)
-                .firstName("name")
-                .lastName("last")
-                .sex(Sex.MALE)
-                .roles(Collections.singletonList("ADMIN"))
-                .country("Russia")
-                .build();
-        defaultUserDto = PersonDTO.builder()
-                .uuid(DEFAULT_UUID)
-                .username("user")
-                .password("pswd")
-                .oldPassword(null)
-                .firstName("name")
-                .lastName("last")
-                .sex(Sex.MALE)
-                .roles(Collections.singletonList("USER"))
-                .country("Russia")
                 .build();
         newPersonDto = PersonDTO.builder()
                 .uuid(DEFAULT_UUID)
@@ -222,6 +200,15 @@ public class PersonServiceImplTests {
         PowerMockito.when(roleRepository.findByName("USER")).thenReturn(userRole);
     }
 
+    @After
+    public void after() {
+        Mockito.reset(personRepository);
+        Mockito.reset(publicationRepository);
+        Mockito.reset(roleRepository);
+        Mockito.reset(roleService);
+        Mockito.reset(encoder);
+    }
+
     @Test
     public void findAll() {
         PowerMockito.when(personRepository.findAll()).thenReturn(Collections.singletonList(defaultPerson));
@@ -270,7 +257,7 @@ public class PersonServiceImplTests {
         PowerMockito.mockStatic(UUID.class);
         PowerMockito.when(UUID.randomUUID()).thenReturn(DEFAULT_UUID);
         PowerMockito.when(personRepository.existsByUsername(defaultPersonDto.getUsername())).thenReturn(false);
-        assertEquals(defaultAdminDto, personService.createAdmin(defaultPersonDto));
+        assertEquals(defaultPersonDto, personService.createAdmin(defaultPersonDto));
     }
 
 
@@ -297,7 +284,7 @@ public class PersonServiceImplTests {
         PowerMockito.mockStatic(UUID.class);
         PowerMockito.when(UUID.randomUUID()).thenReturn(DEFAULT_UUID);
         PowerMockito.when(personRepository.existsByUsername(defaultPersonDto.getUsername())).thenReturn(false);
-        assertEquals(defaultUserDto, personService.createUser(defaultPersonDto));
+        assertEquals(defaultPersonDto, personService.createUser(defaultPersonDto));
     }
 
     @Test(expected = DataNotFoundException.class)
@@ -410,7 +397,7 @@ public class PersonServiceImplTests {
     @Test
     public void addRoleToPerson() {
         PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
-        assertEquals(defaultUserDto, personService.addRoleToPerson(DEFAULT_UUID, PersonDTO.builder().roles(Stream.of("USER")
+        assertEquals(defaultPersonDto, personService.addRoleToPerson(DEFAULT_UUID, PersonDTO.builder().roles(Stream.of("USER")
                 .collect(Collectors.toCollection(ArrayList::new))).build()));
         ;
     }
@@ -436,7 +423,7 @@ public class PersonServiceImplTests {
     public void deleteRoleFromPerson() {
         defaultPerson.getRoles().add(userRole);
         PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
-        assertEquals(defaultUserDto, personService.deleteRoleFromPerson(DEFAULT_UUID, "USER"));
+        assertEquals(defaultPersonDto, personService.deleteRoleFromPerson(DEFAULT_UUID, "USER"));
     }
 
     @Test(expected = DataNotFoundException.class)
@@ -446,6 +433,7 @@ public class PersonServiceImplTests {
 
     @Test
     public void findPersonPublications() {
+        PowerMockito.when(personRepository.findByUuid(DEFAULT_UUID)).thenReturn(defaultPerson);
         PowerMockito.when(publicationRepository.findAllByAuthorUuid(DEFAULT_UUID)).thenReturn(
                 Collections.singletonList(defaultPublication));
         assertEquals(Collections.singletonList(defaultPublicationDTO), personService.findPersonPublications(DEFAULT_UUID));

@@ -1,8 +1,10 @@
 package ru.mityushin.jobfinder.server.service.userdetails;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mockito;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PowerMockIgnore;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -69,6 +71,11 @@ public class UserDetailsServiceImplTest {
                 .enabled(true)
                 .roles(new HashSet<>())
                 .build();
+    }
+
+    @After
+    public void after() {
+        Mockito.reset(personRepository);
     }
 
     @Test(expected = UsernameNotFoundException.class)
