@@ -12,6 +12,7 @@ import ru.mityushin.jobfinder.server.repo.PublicationRepository;
 import ru.mityushin.jobfinder.server.repo.RoleRepository;
 import ru.mityushin.jobfinder.server.service.role.RoleService;
 import ru.mityushin.jobfinder.server.dto.PersonDTO;
+import ru.mityushin.jobfinder.server.util.JobFinderUtils;
 import ru.mityushin.jobfinder.server.util.exception.PermissionDeniedException;
 import ru.mityushin.jobfinder.server.util.exception.data.DataAlreadyExistsException;
 import ru.mityushin.jobfinder.server.util.exception.data.DataNotFoundException;
@@ -58,6 +59,16 @@ public class PersonServiceImpl implements PersonService {
     @Override
     public PersonDTO createAdmin(PersonDTO personDTO) {
         return createWithRoles(personDTO, roleService.getAdminRoles());
+    }
+
+    @Override
+    public PersonDTO getCurrent() {
+        UUID principalIdentifier = JobFinderUtils.getPrincipalIdentifier();
+        Person person = personRepository.findByUuid(principalIdentifier);
+        if (person == null) {
+            throw new DataNotFoundException("This profile has been deleted or has not been created yet.");
+        }
+        return PersonMapper.map(person);
     }
 
     @Transactional
@@ -155,6 +166,10 @@ public class PersonServiceImpl implements PersonService {
 
     @Override
     public Collection<PublicationDTO> findPersonPublications(UUID uuid) {
+        Person person = personRepository.findByUuid(uuid);
+        if (person == null) {
+            throw new DataNotFoundException("This profile has been deleted or has not been created yet.");
+        }
         return publicationRepository.findAllByAuthorUuid(uuid).stream()
                 .map(PublicationMapper::map)
                 .collect(Collectors.toList());
@@ -173,6 +188,12 @@ public class PersonServiceImpl implements PersonService {
                 .uuid(person.getUuid())
                 .username(personDTO.getUsername() == null ? person.getUsername() : personDTO.getUsername())
                 .password(personDTO.getPassword() == null ? person.getPassword() : encoder.encode(personDTO.getPassword()))
+                .firstName(personDTO.getFirstName() == null ? person.getFirstName() : personDTO.getFirstName())
+                .lastName(personDTO.getLastName() == null ? person.getLastName() : personDTO.getLastName())
+                .country(personDTO.getCountry() == null ? person.getCountry() : personDTO.getCountry())
+                .sex(personDTO.getSex() == null ? person.getSex() : personDTO.getSex())
+                .organizations(person.getOrganizations())
+                .roles(person.getRoles())
                 .deleted(person.getDeleted())
                 .locked(person.getLocked())
                 .enabled(person.getEnabled())

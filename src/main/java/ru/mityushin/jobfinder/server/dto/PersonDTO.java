@@ -2,6 +2,7 @@ package ru.mityushin.jobfinder.server.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import ru.mityushin.jobfinder.server.util.enums.Sex;
 
@@ -12,6 +13,7 @@ import java.util.UUID;
 
 @Builder
 @Getter
+@EqualsAndHashCode
 public class PersonDTO {
 
     private UUID uuid;

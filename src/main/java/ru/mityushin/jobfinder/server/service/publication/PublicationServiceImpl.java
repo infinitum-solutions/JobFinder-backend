@@ -63,7 +63,7 @@ public class PublicationServiceImpl implements PublicationService {
     }
 
     @Override
-    public PublicationDTO delete(UUID uuid) throws DataNotFoundException {
+    public PublicationDTO delete(UUID uuid) {
         Publication publication = publicationRepository.findByUuid(uuid);
         checkAccessible(publication);
         publication.setDeleted(Boolean.TRUE);

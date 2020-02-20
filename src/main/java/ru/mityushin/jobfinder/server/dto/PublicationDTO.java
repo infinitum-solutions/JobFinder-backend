@@ -8,6 +8,7 @@ import java.util.UUID;
 
 @Builder
 @Getter
+@EqualsAndHashCode
 public class PublicationDTO {
 
     private UUID uuid;

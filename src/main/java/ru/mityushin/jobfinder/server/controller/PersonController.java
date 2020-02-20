@@ -27,6 +27,12 @@ public class PersonController {
         return new ResponseEntity<>(personService.findAll(), HttpStatus.OK);
     }
 
+    @PostMapping
+    @ResponseBody
+    public ResponseEntity<PersonDTO> createUser(@Valid @RequestBody PersonDTO personDTO) {
+        return new ResponseEntity<>(personService.createUser(personDTO), HttpStatus.CREATED);
+    }
+
     @Secured({"ROLE_ADMIN"})
     @PostMapping(value = "/admin")
     @ResponseBody
@@ -34,10 +40,10 @@ public class PersonController {
         return new ResponseEntity<>(personService.createAdmin(personDTO), HttpStatus.CREATED);
     }
 
-    @PostMapping
+    @GetMapping(value = "/current")
     @ResponseBody
-    public ResponseEntity<PersonDTO> createUser(@Valid @RequestBody PersonDTO personDTO) {
-        return new ResponseEntity<>(personService.createUser(personDTO), HttpStatus.CREATED);
+    public ResponseEntity<PersonDTO> getCurrentPerson() {
+        return new ResponseEntity<>(personService.getCurrent(), HttpStatus.OK);
     }
 
     @Secured({"ROLE_USER"})
